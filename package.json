@@ -1,0 +1,30 @@
+{
+  "name": "toonly-photo-maker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"node --watch server/index.mjs\"",
+    "dev:system-ca": "concurrently -k \"vite\" \"node --use-system-ca --watch server/index.mjs\"",
+    "build": "tsc -b && vite build",
+    "start": "node server/index.mjs",
+    "start:system-ca": "node --use-system-ca server/index.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "lucide-react": "^0.468.0",
+    "multer": "^2.0.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.2"
+  }
+}
