@@ -6,6 +6,26 @@
     <meta name="theme-color" content="#f4f4ef" />
     <meta name="description" content="Turn a portrait into a polished cartoon character with AI." />
     <title>Toonly — Cartoon portrait studio</title>
+    <script>
+      (() => {
+        const storageKey = 'toonly-theme'
+        let theme = 'light'
+        try {
+          const saved = window.localStorage.getItem(storageKey)
+          theme = saved === 'light' || saved === 'dark'
+            ? saved
+            : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        } catch {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+        document.documentElement.dataset.theme = theme
+        document.documentElement.style.colorScheme = theme
+        document.querySelector('meta[name="theme-color"]')?.setAttribute(
+          'content',
+          theme === 'dark' ? '#151612' : '#f3f3ee',
+        )
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

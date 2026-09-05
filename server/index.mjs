@@ -20,6 +20,22 @@ const STYLE_PROMPTS = {
   clay: `Transform this portrait into a handcrafted clay character portrait with matte clay textures, gently simplified forms, soft studio lighting, and subtle handcrafted imperfections. Preserve the subject's identity, facial structure, skin tone, hairstyle, expression, accessories, clothing, crop, and pose. Keep proportions appealing but recognizable and use a simple warm background.`,
 }
 
+const REFINEMENT_PROMPTS = {
+  likeness: `Increase the likeness to the reference subject. Correct facial structure, skin tone, hairstyle, expression, accessories, and distinctive details while keeping the current art direction, crop, clothing, and background unchanged.`,
+  expression: `Give the character a warmer, natural smile. Preserve identity, hairstyle, accessories, clothing, art direction, crop, and background. Do not exaggerate facial proportions.`,
+  outfit: `Change the character's outfit to a polished smart-casual look that suits the existing color palette. Preserve identity, facial expression, hairstyle, accessories, art direction, crop, pose, and background.`,
+  background: `Replace the background with a warm, minimal studio backdrop with subtle depth. Preserve the character's identity, expression, hairstyle, accessories, clothing, art direction, crop, and pose.`,
+  'more-stylized': `Make the current art direction more expressive and stylized while keeping the subject clearly recognizable. Preserve identity, skin tone, hairstyle, accessories, clothing, crop, pose, and background.`,
+  'less-stylized': `Make the portrait slightly more natural and anatomically faithful while retaining the current illustrated art direction. Preserve identity, skin tone, hairstyle, accessories, clothing, crop, pose, and background.`,
+}
+
+const PACK_PROMPTS = {
+  avatar: `Create a clean, centered profile avatar of this exact character. Use a close head-and-shoulders crop, a calm confident expression, and a simple studio background. Preserve the character's identity, skin tone, hairstyle, accessories, clothing design, and art direction.`,
+  smile: `Create a friendly portrait of this exact character with a warm natural smile. Keep the same identity, skin tone, hairstyle, accessories, clothing design, and art direction. Use a simple complementary background and a centered head-and-shoulders composition.`,
+  wave: `Create a portrait of this exact character giving a friendly wave, with one hand clearly visible and anatomically correct. Preserve the character's identity, skin tone, hairstyle, accessories, clothing design, and art direction. Use a simple complementary background.`,
+  celebrate: `Create a lively portrait of this exact character celebrating with an upbeat, confident pose. Preserve the character's identity, skin tone, hairstyle, accessories, clothing design, and art direction. Keep the composition clean and suitable for a social-media character pack.`,
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024, files: 1 },
@@ -59,11 +75,53 @@ app.post('/api/generate', upload.single('portrait'), async (request, response) =
   }
 
   const style = typeof request.body.style === 'string' ? request.body.style : 'soft-3d'
-  const basePrompt = STYLE_PROMPTS[style] || STYLE_PROMPTS['soft-3d']
+  const operation = typeof request.body.operation === 'string' ? request.body.operation : 'create'
+  const preset = typeof request.body.preset === 'string' ? request.body.preset : ''
+  const allowedOperations = new Set(['create', 'refine', 'pack'])
+
+  if (!allowedOperations.has(operation)) {
+    return response.status(400).json({
+      error: 'That generation operation is not supported.',
+      code: 'INVALID_OPERATION',
+    })
+  }
+
+  if (!STYLE_PROMPTS[style]) {
+    return response.status(400).json({
+      error: 'Choose one of the available portrait styles.',
+      code: 'INVALID_STYLE',
+    })
+  }
+
   const instruction = typeof request.body.instruction === 'string'
     ? request.body.instruction.trim().slice(0, 280)
     : ''
-  const prompt = `${basePrompt}\n\nAdditional user preference: ${instruction || 'No additional preference.'}\nReturn only one finished portrait image.`
+  let prompt
+
+  if (operation === 'refine') {
+    const refinement = preset === 'custom' ? instruction : REFINEMENT_PROMPTS[preset]
+    if (!refinement) {
+      return response.status(400).json({
+        error: preset === 'custom'
+          ? 'Describe the refinement you want to make.'
+          : 'Choose one of the available refinements.',
+        code: 'INVALID_REFINEMENT',
+      })
+    }
+    prompt = `Refine this existing illustrated character portrait. ${refinement}\nReturn only one finished portrait image.`
+  } else if (operation === 'pack') {
+    const packPrompt = PACK_PROMPTS[preset]
+    if (!packPrompt) {
+      return response.status(400).json({
+        error: 'Choose one of the available character-pack images.',
+        code: 'INVALID_PACK_PRESET',
+      })
+    }
+    prompt = `${packPrompt}\nReturn only one finished square portrait image.`
+  } else {
+    const basePrompt = STYLE_PROMPTS[style]
+    prompt = `${basePrompt}\n\nAdditional user preference: ${instruction || 'No additional preference.'}\nReturn only one finished portrait image.`
+  }
 
   try {
     const sourceImage = `data:${request.file.mimetype};base64,${request.file.buffer.toString('base64')}`
@@ -119,6 +177,8 @@ app.post('/api/generate', upload.single('portrait'), async (request, response) =
       image,
       mode: 'live',
       model,
+      operation,
+      preset: preset || null,
       output: {
         width: outputSize,
         height: outputSize,

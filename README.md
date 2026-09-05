@@ -8,6 +8,9 @@ Toonly is a focused portrait editor that turns a regular photo into a cartoon-li
 - Four curated styles: Soft 3D, Anime, Comic Ink, and Clay
 - Optional detail instruction for identity-preserving adjustments
 - Before/after comparison slider
+- Result refinement with six focused adjustments and a custom instruction
+- Four-image character packs generated from an approved master portrait
+- Individual character-pack downloads and one-click ZIP export
 - High-quality 1408×1408 (approximately 2MP) result download
 - Responsive editor layout for desktop, tablet, and mobile
 - Server-side Together AI key protection
@@ -86,6 +89,8 @@ Uploads are held in memory for the duration of one request. There is no database
 - Accepted types: JPEG, PNG, and WebP
 - User instructions are limited to 280 characters
 - One image is requested per generation, with no automatic provider retries
+- Refinements each use one additional generation request
+- Character packs use four sequential generation requests after an explicit confirmation
 - Output is fixed at 1408×1408 (approximately 2MP) to balance quality and credit use
 - Results should be reviewed before public or commercial use
 - Users should only upload portraits they have permission to edit
